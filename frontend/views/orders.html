@@ -1,0 +1,170 @@
+<!-- Orders Page -->
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h3><i class="fas fa-receipt"></i> Order Management</h3>
+    <button class="btn btn-outline-primary btn-sm" ng-click="loadOrders()">
+        <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+</div>
+
+<!-- Alert -->
+<div class="alert alert-{{alert.type}} alert-dismissible fade show" ng-if="alert">
+    <i class="fas" ng-class="{'fa-check-circle': alert.type==='success', 'fa-exclamation-triangle': alert.type==='danger'}"></i>
+    {{alert.message}}
+    <button type="button" class="btn-close" ng-click="alert=null"></button>
+</div>
+
+<!-- Filters -->
+<div class="card">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Search by Order ID</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" ng-model="searchId" placeholder="ORD-XXXXXXXX"
+                           ng-keyup="$event.keyCode === 13 && searchOrder()">
+                    <button class="btn btn-primary" ng-click="searchOrder()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Filter by Status</label>
+                <select class="form-select" ng-model="filterStatus" ng-change="loadOrders()">
+                    <option value="">All Statuses</option>
+                    <option ng-repeat="s in statusOptions" value="{{s}}">{{s}}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Filter by User</label>
+                <input type="text" class="form-control" ng-model="filterUser" placeholder="e.g. USER_1"
+                       ng-keyup="$event.keyCode === 13 && loadOrders()">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" ng-click="resetFilters()">
+                    <i class="fas fa-times"></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6><i class="fas fa-list-alt"></i> Orders</h6>
+        <span class="badge bg-primary">{{orders.length}} orders</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" ng-if="orders.length > 0">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Order ID</th>
+                        <th ng-if="isAdmin">User</th>
+                        <th>Status</th>
+                        <th>Subtotal</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody ng-repeat="order in orders">
+                    <tr>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary btn-icon" ng-click="toggleDetail(order)">
+                                <i class="fas" ng-class="expandedOrder === order.orderId ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                            </button>
+                        </td>
+                        <td><strong>{{order.orderId}}</strong></td>
+                        <td ng-if="isAdmin">{{order.userId}}</td>
+                        <td><span class="badge" ng-class="getStatusBadgeClass(order.status)">{{order.status}}</span></td>
+                        <td>Rs.{{order.subtotal.toFixed(2)}}</td>
+                        <td class="text-success">-Rs.{{order.discountAmount.toFixed(2)}}</td>
+                        <td><strong>Rs.{{order.totalAmount.toFixed(2)}}</strong></td>
+                        <td><span class="badge bg-info">{{order.paymentMode || '-'}}</span></td>
+                        <td><small>{{order.createdAt}}</small></td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <button class="btn btn-outline-danger btn-sm" ng-click="cancelOrder(order.orderId)"
+                                        ng-if="order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.status !== 'FAILED'">
+                                    <i class="fas fa-ban"></i> Cancel
+                                </button>
+                                <div class="d-flex gap-1" ng-if="isAdmin && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'FAILED'">
+                                    <select class="form-select form-select-sm" ng-model="newStatus[order.orderId]" style="width:130px;">
+                                        <option value="">Status...</option>
+                                        <option ng-repeat="s in statusOptions" value="{{s}}">{{s}}</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary btn-sm" ng-click="updateStatus(order.orderId)">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Expanded Detail -->
+                    <tr ng-if="expandedOrder === order.orderId">
+                        <td colspan="10">
+                            <div class="order-detail">
+                                <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Product ID</th>
+                                            <th>Price</th>
+                                            <th>Ordered</th>
+                                            <th>Returned</th>
+                                            <th>Line Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in order.items">
+                                            <td><strong>{{item.product.name}}</strong></td>
+                                            <td>{{item.product.productId}}</td>
+                                            <td>Rs.{{item.priceAtOrder.toFixed(2)}}</td>
+                                            <td><span class="badge bg-primary">Ordered: {{item.quantity}}</span></td>
+                                            <td>
+                                                <span class="badge bg-success" ng-if="!item.returnedQuantity || item.returnedQuantity === 0">No Returns</span>
+                                                <span class="badge bg-warning" ng-if="item.returnedQuantity > 0">Returned: {{item.returnedQuantity}}</span>
+                                            </td>
+                                            <td><strong>Rs.{{((item.quantity - (item.returnedQuantity || 0)) * item.priceAtOrder).toFixed(2)}}</strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <!-- Return Form -->
+                                <div class="mt-3 p-3 bg-white rounded" ng-if="order.status === 'PAID' || order.status === 'DELIVERED'">
+                                    <h6><i class="fas fa-undo"></i> Return Items</h6>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Product ID</label>
+                                            <input type="text" class="form-control form-control-sm"
+                                                   ng-model="returnForm[order.orderId].productId" placeholder="PROD_001">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" class="form-control form-control-sm"
+                                                   ng-model="returnForm[order.orderId].quantity" placeholder="1" min="1">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-warning btn-sm" ng-click="returnItems(order.orderId)">
+                                                <i class="fas fa-undo"></i> Process Return
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty-state" ng-if="orders.length === 0">
+            <i class="fas fa-receipt"></i>
+            <p>No orders found.</p>
+        </div>
+    </div>
+</div>
