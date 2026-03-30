@@ -1,0 +1,200 @@
+<!-- Admin Page -->
+<div class="page-header">
+    <h3><i class="fas fa-cog"></i> Admin Dashboard</h3>
+</div>
+
+<!-- Alert -->
+<div class="alert alert-{{alert.type}} alert-dismissible fade show" ng-if="alert">
+    <i class="fas" ng-class="{'fa-check-circle': alert.type==='success', 'fa-exclamation-triangle': alert.type==='danger' || alert.type==='warning'}"></i>
+    {{alert.message}}
+    <button type="button" class="btn-close" ng-click="alert=null"></button>
+</div>
+
+<div class="row">
+    <!-- Failure Mode -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-exclamation-circle"></i> Failure Injection System</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">When enabled, ALL payments will fail. This simulates payment gateway failures to test the rollback system.</p>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <strong>Payment Failure Mode:</strong>
+                        <span class="badge ms-2" ng-class="failureMode ? 'bg-danger' : 'bg-success'">
+                            {{failureMode ? 'ENABLED - All Payments Fail' : 'DISABLED - Normal Mode'}}
+                        </span>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" ng-checked="failureMode" ng-click="toggleFailureMode()">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h6>
+                <button class="btn btn-outline-primary btn-sm" ng-click="loadLowStock()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm" ng-if="lowStockProducts.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                            <th>Available</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="p in lowStockProducts">
+                            <td>{{p.productId}} - {{p.name}}</td>
+                            <td>{{p.stock}}</td>
+                            <td>{{p.stock - p.reservedStock}}</td>
+                            <td>
+                                <span class="badge" ng-class="p.stock === 0 ? 'bg-danger' : 'bg-warning'">
+                                    {{p.stock === 0 ? 'OUT' : 'LOW'}}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="p-3 text-center text-muted" ng-if="lowStockProducts.length === 0">
+                    <i class="fas fa-check-circle text-success"></i> All products have healthy stock levels.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Concurrency Simulation -->
+<div class="card">
+    <div class="card-header">
+        <h6><i class="fas fa-users"></i> Concurrency Simulation</h6>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Simulate multiple users trying to add the same product to their cart simultaneously. Tests pessimistic locking to prevent overselling.</p>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Product ID</label>
+                <input type="text" class="form-control" ng-model="simForm.productId" placeholder="e.g. PROD_001">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Quantity / User</label>
+                <input type="number" class="form-control" ng-model="simForm.quantity" min="1">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Number of Users</label>
+                <input type="number" class="form-control" ng-model="simForm.users" min="2" max="20">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" ng-click="simulateConcurrency()" ng-disabled="simulating">
+                    <span ng-if="!simulating"><i class="fas fa-play"></i> Run Simulation</span>
+                    <span ng-if="simulating"><i class="fas fa-spinner fa-spin"></i> Simulating...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Simulation Results -->
+        <div class="mt-4" ng-if="simResults">
+            <h6>Simulation Results</h6>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="stat-number">{{simResults.totalUsers}}</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="stat-number text-success">{{simResults.successfulUsers}}</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="stat-number text-danger">{{simResults.failedUsers}}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="stat-number">{{simResults.requestedQuantityPerUser}}</div>
+                        <div class="stat-label">Qty / User</div>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Result</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="detail in simResults.details">
+                        <td>{{detail.userId}}</td>
+                        <td>
+                            <span class="badge" ng-class="detail.success ? 'bg-success' : 'bg-danger'">
+                                {{detail.success ? 'SUCCESS' : 'FAILED'}}
+                            </span>
+                        </td>
+                        <td><small>{{detail.message}}</small></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Event Processing -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6><i class="fas fa-bolt"></i> Event Queue Processing</h6>
+        <div>
+            <button class="btn btn-success btn-sm me-2" ng-click="processEvents()">
+                <i class="fas fa-play"></i> Process Events
+            </button>
+            <button class="btn btn-outline-primary btn-sm" ng-click="loadEvents()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm" ng-if="events.length > 0">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Entity</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="event in events | limitTo:20">
+                    <td><small>{{event.createdAt}}</small></td>
+                    <td><span class="badge bg-primary">{{event.eventType}}</span></td>
+                    <td>{{event.entityId}}</td>
+                    <td>
+                        <span class="badge" ng-class="event.failed ? 'bg-danger' : (event.processed ? 'bg-success' : 'bg-warning')">
+                            {{event.failed ? 'Failed' : (event.processed ? 'Done' : 'Pending')}}
+                        </span>
+                    </td>
+                    <td><small>{{event.details}}</small></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="p-3 text-center text-muted" ng-if="events.length === 0">
+            No events yet.
+        </div>
+    </div>
+</div>

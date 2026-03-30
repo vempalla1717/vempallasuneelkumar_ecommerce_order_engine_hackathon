@@ -1,0 +1,106 @@
+<div class="login-page">
+    <div class="login-container">
+        <!-- Left side - branding -->
+        <div class="login-brand">
+            <div class="brand-content">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <h1>E-Commerce Engine</h1>
+                <p>Your one-stop shop for the best deals. Manage products, cart, orders, and more with our powerful e-commerce platform.</p>
+                <div class="brand-features">
+                    <div><i class="fas fa-check-circle"></i> Real-time Stock Management</div>
+                    <div><i class="fas fa-check-circle"></i> Smart Discount Engine</div>
+                    <div><i class="fas fa-check-circle"></i> Secure Order Processing</div>
+                    <div><i class="fas fa-check-circle"></i> Multi-User Support</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side - form -->
+        <div class="login-form-section">
+            <!-- Alert -->
+            <div class="alert alert-{{alert.type}} alert-dismissible" ng-if="alert" style="border-radius:10px;">
+                <i class="fas" ng-class="{'fa-check-circle': alert.type==='success', 'fa-exclamation-circle': alert.type==='danger'}"></i>
+                {{alert.message}}
+                <button type="button" class="btn-close btn-close-sm" ng-click="alert=null"></button>
+            </div>
+
+            <!-- Sign In Form -->
+            <div ng-if="!isSignUp">
+                <h2 class="form-title">Welcome Back</h2>
+                <p class="form-subtitle">Sign in to your account</p>
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control form-control-lg" ng-model="loginForm.userId"
+                               placeholder="Enter your username" ng-keyup="$event.keyCode === 13 && signin()">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control form-control-lg" ng-model="loginForm.password"
+                               placeholder="Enter your password" ng-keyup="$event.keyCode === 13 && signin()">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg w-100 mb-3" ng-click="signin()" ng-disabled="loading">
+                    <span ng-if="!loading"><i class="fas fa-sign-in-alt"></i> Sign In</span>
+                    <span ng-if="loading"><i class="fas fa-spinner fa-spin"></i> Signing in...</span>
+                </button>
+
+                <p class="text-center text-muted">
+                    Don't have an account?
+                    <a href="" ng-click="toggleMode()" class="text-primary fw-bold">Sign Up</a>
+                </p>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div ng-if="isSignUp">
+                <h2 class="form-title">Create Account</h2>
+                <p class="form-subtitle">Join us and start shopping</p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control form-control-lg" ng-model="signupForm.firstName" placeholder="John">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control form-control-lg" ng-model="signupForm.lastName" placeholder="Doe">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control form-control-lg" ng-model="signupForm.userName" placeholder="e.g. johndoe">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control form-control-lg" ng-model="signupForm.password"
+                               placeholder="Min 4 characters" ng-keyup="$event.keyCode === 13 && signup()">
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg w-100 mb-3" ng-click="signup()" ng-disabled="loading">
+                    <span ng-if="!loading"><i class="fas fa-user-plus"></i> Create Account</span>
+                    <span ng-if="loading"><i class="fas fa-spinner fa-spin"></i> Creating...</span>
+                </button>
+
+                <p class="text-center text-muted">
+                    Already have an account?
+                    <a href="" ng-click="toggleMode()" class="text-primary fw-bold">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

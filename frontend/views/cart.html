@@ -1,0 +1,227 @@
+<!-- Cart Page -->
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h3><i class="fas fa-shopping-basket"></i> Shopping Cart <small class="text-muted fs-6">( {{getCurrentUser()}} )</small></h3>
+    <button class="btn btn-outline-primary btn-sm" ng-click="loadCart()">
+        <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+</div>
+
+<!-- Alert -->
+<div class="alert alert-{{alert.type}} alert-dismissible fade show" ng-if="alert">
+    <i class="fas" ng-class="{'fa-check-circle': alert.type==='success', 'fa-exclamation-triangle': alert.type==='danger'}"></i>
+    {{alert.message}}
+    <button type="button" class="btn-close" ng-click="alert=null"></button>
+</div>
+
+<!-- Cart Items (hidden during checkout) -->
+<div ng-if="!showCheckout">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6><i class="fas fa-shopping-cart"></i> Cart Items</h6>
+            <div>
+                <span class="badge bg-primary me-2">{{cartItems.length}} items</span>
+                <button class="btn btn-outline-danger btn-sm" ng-click="clearCart()" ng-if="cartItems.length > 0">
+                    <i class="fas fa-trash"></i> Clear Cart
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover" ng-if="cartItems.length > 0">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Product ID</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in cartItems">
+                        <td><strong>{{item.product.name}}</strong></td>
+                        <td>{{item.product.productId}}</td>
+                        <td>Rs.{{item.product.price | inr}}</td>
+                        <td>
+                            <div class="qty-controls">
+                                <button class="btn btn-outline-secondary" ng-click="decreaseQty(item)"><i class="fas fa-minus"></i></button>
+                                <span>{{item.quantity}}</span>
+                                <button class="btn btn-outline-secondary" ng-click="increaseQty(item)"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </td>
+                        <td><strong>Rs.{{(item.product.price * item.quantity) | inr}}</strong></td>
+                        <td>
+                            <button class="btn btn-outline-danger btn-sm" ng-click="removeItem(item.product.productId)">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Cart Total:</strong></td>
+                        <td colspan="2"><strong class="text-primary fs-5">Rs.{{getCartTotal() | inr}}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="empty-state" ng-if="cartItems.length === 0">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty.</p>
+                <a href="#/products" class="btn btn-primary"><i class="fas fa-store"></i> Browse Products</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proceed to Checkout Button -->
+    <div class="text-end" ng-if="cartItems.length > 0">
+        <button class="btn btn-primary btn-lg" ng-click="proceedToCheckout()">
+            <i class="fas fa-arrow-right"></i> Proceed to Checkout
+        </button>
+    </div>
+</div>
+
+<!-- ===== CHECKOUT / ORDER SUMMARY ===== -->
+<div ng-if="showCheckout">
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px 12px 0 0 !important;">
+                    <h6 style="color:white;"><i class="fas fa-receipt" style="color:white;"></i> Order Summary</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Qty</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in cartItems">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img ng-src="{{item.product.imageUrl}}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;"
+                                             onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=80&h=80&fit=crop'">
+                                        <div>
+                                            <strong class="d-block" style="font-size:0.9rem;">{{item.product.name}}</strong>
+                                            <small class="text-muted">{{item.product.productId}}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Rs.{{item.product.price | inr}}</td>
+                                <td>x{{item.quantity}}</td>
+                                <td class="text-end"><strong>Rs.{{(item.product.price * item.quantity) | inr}}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Coupon Code -->
+            <div class="card">
+                <div class="card-header"><h6><i class="fas fa-tags"></i> Coupon Code</h6></div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <input type="text" class="form-control" ng-model="couponCode" placeholder="Enter coupon: SAVE10 or FLAT200">
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-outline-primary w-100" ng-click="previewDiscount()">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment & Price Breakdown -->
+        <div class="col-md-5">
+            <!-- Price Breakdown -->
+            <div class="card">
+                <div class="card-header"><h6><i class="fas fa-calculator"></i> Price Details</h6></div>
+                <div class="card-body">
+                    <div class="discount-preview">
+                        <div class="discount-row">
+                            <span>Subtotal ({{cartItems.length}} items)</span>
+                            <span>Rs.{{(discountPreview ? discountPreview.subtotal : getCartTotal()) | inr}}</span>
+                        </div>
+                        <div class="discount-row text-success" ng-if="discountPreview && discountPreview.percentageDiscount > 0">
+                            <span>Volume Discount (10%)</span>
+                            <span>-Rs.{{discountPreview.percentageDiscount | inr}}</span>
+                        </div>
+                        <div class="discount-row text-success" ng-if="discountPreview && discountPreview.bulkDiscount > 0">
+                            <span>Bulk Discount (5%)</span>
+                            <span>-Rs.{{discountPreview.bulkDiscount | inr}}</span>
+                        </div>
+                        <div class="discount-row text-success" ng-if="discountPreview && discountPreview.couponDiscount > 0">
+                            <span>Coupon Discount</span>
+                            <span>-Rs.{{discountPreview.couponDiscount | inr}}</span>
+                        </div>
+                        <div class="discount-row text-danger" ng-if="discountPreview && discountPreview.totalDiscount > 0">
+                            <span>Total Savings</span>
+                            <span>-Rs.{{discountPreview.totalDiscount | inr}}</span>
+                        </div>
+                        <div class="discount-row total">
+                            <span>Total Amount</span>
+                            <span>Rs.{{(discountPreview ? discountPreview.finalTotal : getCartTotal()) | inr}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Mode -->
+            <div class="card">
+                <div class="card-header"><h6><i class="fas fa-credit-card"></i> Payment Mode</h6></div>
+                <div class="card-body">
+                    <div class="payment-options">
+                        <label class="payment-option" ng-class="{selected: paymentMode === 'UPI'}">
+                            <input type="radio" name="payment" ng-model="paymentMode" value="UPI">
+                            <div class="payment-icon"><i class="fas fa-mobile-alt"></i></div>
+                            <div>
+                                <strong>UPI</strong>
+                                <small class="d-block text-muted">Google Pay, PhonePe, Paytm</small>
+                            </div>
+                        </label>
+                        <label class="payment-option" ng-class="{selected: paymentMode === 'CARD'}">
+                            <input type="radio" name="payment" ng-model="paymentMode" value="CARD">
+                            <div class="payment-icon"><i class="fas fa-credit-card"></i></div>
+                            <div>
+                                <strong>Credit / Debit Card</strong>
+                                <small class="d-block text-muted">Visa, Mastercard, RuPay</small>
+                            </div>
+                        </label>
+                        <label class="payment-option" ng-class="{selected: paymentMode === 'COD'}">
+                            <input type="radio" name="payment" ng-model="paymentMode" value="COD">
+                            <div class="payment-icon"><i class="fas fa-money-bill-wave"></i></div>
+                            <div>
+                                <strong>Cash on Delivery</strong>
+                                <small class="d-block text-muted">Pay when you receive</small>
+                            </div>
+                        </label>
+                        <label class="payment-option" ng-class="{selected: paymentMode === 'NET_BANKING'}">
+                            <input type="radio" name="payment" ng-model="paymentMode" value="NET_BANKING">
+                            <div class="payment-icon"><i class="fas fa-university"></i></div>
+                            <div>
+                                <strong>Net Banking</strong>
+                                <small class="d-block text-muted">All major banks</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Place Order -->
+            <button class="btn btn-success btn-lg w-100 mb-2" ng-click="placeOrder()" ng-disabled="placing">
+                <span ng-if="!placing"><i class="fas fa-check-circle"></i> Place Order - Rs.{{(discountPreview ? discountPreview.finalTotal : getCartTotal()) | inr}}</span>
+                <span ng-if="placing"><i class="fas fa-spinner fa-spin"></i> Processing Payment...</span>
+            </button>
+            <button class="btn btn-outline-secondary w-100" ng-click="showCheckout = false">
+                <i class="fas fa-arrow-left"></i> Back to Cart
+            </button>
+        </div>
+    </div>
+</div>
