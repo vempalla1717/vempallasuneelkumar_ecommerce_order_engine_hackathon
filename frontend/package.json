@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Modern frontend for the e-commerce engine",
   "main": "app.js",
   "directories": {
     "lib": "lib"
@@ -12,10 +12,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
-    "angular": "^1.8.3",
-    "angular-animate": "^1.8.3",
-    "angular-route": "^1.8.3"
+    "axios": "^1.7.0"
   }
 }
